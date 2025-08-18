@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Montgomery College Course Finder</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-graduation-cap"></i>
+                    <h1>Montgomery College Course Finder</h1>
+                </div>
+                <p class="tagline">Find available courses with automated seat checking</p>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Search Form -->
+            <section class="search-section">
+                <div class="form-container">
+                    <h2><i class="fas fa-search"></i> Course Search Criteria</h2>
+                    
+                    <form id="courseSearchForm" class="search-form">
+                        <!-- Term Selection -->
+                        <div class="form-group">
+                            <label for="term">
+                                <i class="fas fa-calendar-alt"></i>
+                                Academic Term
+                            </label>
+                            <select id="term" name="term" required>
+                                <option value="">Select Term</option>
+                                <option value="Fall 2025" selected>Fall 2025</option>
+                                <option value="Spring 2026">Spring 2026</option>
+                                <option value="Summer I 2025">Summer I 2025</option>
+                                <option value="Summer II 2025">Summer II 2025</option>
+                            </select>
+                        </div>
+
+                        <!-- Subject Selection -->
+                        <div class="form-group">
+                            <label for="subject">
+                                <i class="fas fa-book"></i>
+                                Subject
+                            </label>
+                            <select id="subject" name="subject" required>
+                                <option value="">Select Subject</option>
+                                <option value="COMM" selected>COMM - Communication Studies</option>
+                                <option value="MATH">MATH - Mathematics</option>
+                                <option value="ENGL">ENGL - English</option>
+                                <option value="CSCI">CSCI - Computer Science</option>
+                                <option value="HIST">HIST - History</option>
+                                <option value="PSYC">PSYC - Psychology</option>
+                                <option value="BIOL">BIOL - Biology</option>
+                                <option value="CHEM">CHEM - Chemistry</option>
+                                <option value="PHYS">PHYS - Physics</option>
+                                <option value="ECON">ECON - Economics</option>
+                            </select>
+                        </div>
+
+                        <!-- Course Number Filter -->
+                        <div class="form-group">
+                            <label for="courseNumber">
+                                <i class="fas fa-hashtag"></i>
+                                Course Number (Optional)
+                            </label>
+                            <input type="text" id="courseNumber" name="courseNumber" 
+                                   placeholder="e.g., 108, 140, 110" 
+                                   pattern="[0-9]{3}" 
+                                   title="Enter a 3-digit course number">
+                            <small class="form-help">Leave empty to search all courses in the subject</small>
+                        </div>
+
+                        <!-- Campus Filter -->
+                        <div class="form-group">
+                            <label for="campus">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Campus
+                            </label>
+                            <select id="campus" name="campus">
+                                <option value="">All Campuses</option>
+                                <option value="Rockville">Rockville Campus</option>
+                                <option value="Germantown">Germantown Campus</option>
+                                <option value="Takoma">Takoma Park/Silver Spring Campus</option>
+                                <option value="Distance">Distance Learning</option>
+                            </select>
+                        </div>
+
+                        <!-- Availability Filter -->
+                        <div class="form-group">
+                            <label for="availability">
+                                <i class="fas fa-check-circle"></i>
+                                Show Only Available Courses
+                            </label>
+                            <div class="checkbox-wrapper">
+                                <input type="checkbox" id="availability" name="availability">
+                                <label for="availability" class="checkbox-label">
+                                    Only show courses with seats available > waitlist count
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="form-actions">
+                            <button type="submit" class="search-btn" id="searchBtn">
+                                <i class="fas fa-search"></i>
+                                Search Courses
+                            </button>
+                            <button type="button" class="clear-btn" id="clearBtn">
+                                <i class="fas fa-undo"></i>
+                                Clear Form
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Loading State -->
+            <section class="loading-section" id="loadingSection" style="display: none;">
+                <div class="loading-container">
+                    <div class="spinner"></div>
+                    <h3>Searching Montgomery College Course Database...</h3>
+                    <p class="loading-steps">
+                        <span class="step active" id="step1">📅 Selecting term...</span>
+                        <span class="step" id="step2">📚 Finding subject courses...</span>
+                        <span class="step" id="step3">🔍 Extracting course data...</span>
+                        <span class="step" id="step4">📊 Analyzing seat availability...</span>
+                        <span class="step" id="step5">📄 Generating report...</span>
+                    </p>
+                </div>
+            </section>
+
+            <!-- Results Section -->
+            <section class="results-section" id="resultsSection" style="display: none;">
+                <div class="results-container">
+                    <div class="results-header">
+                        <h2><i class="fas fa-chart-bar"></i> Search Results</h2>
+                        <button class="new-search-btn" id="newSearchBtn">
+                            <i class="fas fa-plus"></i>
+                            New Search
+                        </button>
+                    </div>
+
+                    <!-- Results Summary -->
+                    <div class="results-summary" id="resultsSummary">
+                        <!-- Summary cards will be inserted here -->
+                    </div>
+
+                    <!-- Available Courses -->
+                    <div class="available-courses" id="availableCourses">
+                        <!-- Available courses will be inserted here -->
+                    </div>
+
+                    <!-- All Courses -->
+                    <div class="all-courses" id="allCourses">
+                        <!-- All courses will be inserted here -->
+                    </div>
+
+                    <!-- Download Options -->
+                    <div class="download-section">
+                        <h3><i class="fas fa-download"></i> Export Results</h3>
+                        <div class="download-buttons">
+                            <button class="download-btn" id="downloadHtml">
+                                <i class="fas fa-file-code"></i>
+                                Download HTML Report
+                            </button>
+                            <button class="download-btn" id="downloadJson">
+                                <i class="fas fa-file-download"></i>
+                                Download JSON Data
+                            </button>
+                            <button class="download-btn" id="downloadCsv">
+                                <i class="fas fa-file-csv"></i>
+                                Download CSV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Error Section -->
+            <section class="error-section" id="errorSection" style="display: none;">
+                <div class="error-container">
+                    <div class="error-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h3>Search Error</h3>
+                    <p id="errorMessage">An error occurred while searching for courses.</p>
+                    <button class="retry-btn" id="retryBtn">
+                        <i class="fas fa-redo"></i>
+                        Try Again
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>&copy; 2025 Montgomery College Course Finder | 
+                   <a href="#about">About</a> | 
+                   <a href="#help">Help</a> | 
+                   <a href="#contact">Contact</a>
+                </p>
+                <p class="tech-note">
+                    <i class="fas fa-robot"></i>
+                    Powered by automated web scraping and real-time course data
+                </p>
+            </div>
+        </footer>
+
+        <!-- About Modal -->
+        <div id="aboutModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas fa-info-circle"></i> About Course Finder</h3>
+                    <button class="modal-close" id="closeAbout">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p>Montgomery College Course Finder is an automated tool that helps students find available course sections by checking real-time seat availability and waitlist information.</p>
+                    
+                    <h4>Features:</h4>
+                    <ul>
+                        <li>🔍 Real-time course search across all campuses</li>
+                        <li>📊 Seat availability analysis</li>
+                        <li>🎯 Filter by subject, campus, and course number</li>
+                        <li>📄 Export results in multiple formats</li>
+                        <li>📱 Mobile-friendly responsive design</li>
+                    </ul>
+                    
+                    <h4>How it works:</h4>
+                    <ol>
+                        <li>Select your search criteria</li>
+                        <li>Our automated system searches Montgomery College's course database</li>
+                        <li>Results are analyzed for seat availability</li>
+                        <li>You receive a comprehensive report with available sections</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script_api.js"></script>
+</body>
+</html>

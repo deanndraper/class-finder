@@ -1,0 +1,95 @@
+# Cache files - these contain scraped data and should not be committed
+course_cache/
+*.cache
+
+# Virtual environment
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Generated reports (these are created during runtime)
+automated_report_*.html
+automated_data_*.json
+course_report_*.html
+course_data_*.json
+final_comm_*.html
+final_comm_*.json
+
+# Debug and temporary files from scraping
+*_debug.png
+*_page_text.txt
+*.png
+biol_debug.png
+crn_investigation.png
+initial_page.png
+search_results_*.png
+after_submit.png
+
+# Intermediate scraping outputs
+comm_courses.html
+comm_courses_data.json
+comm_courses_report.html
+corrected_comm_courses.json
+
+# Environment variables (if you add any)
+.env
+.env.local
+
+# Node modules (if you add any frontend build tools)
+node_modules/
+
+# Python distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Browser automation artifacts
+playwright-report/
+test-results/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints

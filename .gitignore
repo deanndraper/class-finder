@@ -93,3 +93,22 @@ test-results/
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints
+
+# Temporary image files
+2025-08-19_10-26-24-temp.jpg
+screenShotNoName.jpg
+
+# Temporary json files
+api_response_test.json
+scraper_test_output.json
+
+# Development and testing directory
+parsing_dev/
+
+# Temporary python files
+run_dev.py
+test_api_flow.py
+test_scraper_days.py
+
+# Crush internal files
+.crush/

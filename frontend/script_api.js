@@ -337,7 +337,9 @@ function showResults(results, criteria, apiData) {
             document.getElementById('availableCourses').innerHTML = generateNoAvailableCoursesSection();
         }
         
-        document.getElementById('allCourses').innerHTML = generateAllCoursesSection(results);
+        // Show only waitlisted courses in "All Courses" section to avoid duplicates
+        const waitlistedResults = results.filter(r => !r.hasAvailability);
+        document.getElementById('allCourses').innerHTML = generateWaitlistedCoursesSection(waitlistedResults);
     }
 }
 
@@ -420,6 +422,18 @@ function generateAllCoursesSection(results) {
     `;
 }
 
+function generateWaitlistedCoursesSection(waitlistedResults) {
+    return `
+        <div class="course-table-container">
+            <h3><i class="fas fa-clock" style="color: #dc3545;"></i> Waitlisted Courses (${waitlistedResults.length})</h3>
+            <div style="background: #f8d7da; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #dc3545;">
+                <strong>⏳ Waitlist sections:</strong> These courses have more people waiting than seats available. Consider joining waitlists or checking back regularly.
+            </div>
+            ${generateCourseTable(waitlistedResults)}
+        </div>
+    `;
+}
+
 function generateCourseTable(courses) {
     if (courses.length === 0) {
         return `
@@ -439,9 +453,10 @@ function generateCourseTable(courses) {
         return `
             <tr class="${availabilityClass} ${campusClass}">
                 <td class="crn">${course.crn}</td>
-                <td><strong>${course.course}</strong><br><small>${course.courseTitle || ''}</small></td>
+                <td>${course.course}</td>
                 <td>${course.section}</td>
-                <td>${course.days} ${course.time}</td>
+                <td>${course.days}</td>
+                <td>${course.time}</td>
                 <td>${course.campus}</td>
                 <td>${course.location}</td>
                 <td>${course.instructor}</td>
@@ -459,7 +474,8 @@ function generateCourseTable(courses) {
                     <th>CRN</th>
                     <th>Course</th>
                     <th>Section</th>
-                    <th>Days/Time</th>
+                    <th>Days</th>
+                    <th>Time</th>
                     <th>Campus</th>
                     <th>Location</th>
                     <th>Instructor</th>

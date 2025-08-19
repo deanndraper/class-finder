@@ -302,5 +302,5 @@ if __name__ == '__main__':
     print("  GET  /api/health        - Health check")
     print("")
     
-    # Run the development server
-    app.run(debug=True, host='0.0.0.0', port=8080)
+    # Run the development server with enhanced auto-reload
+    app.run(debug=True, host='0.0.0.0', port=8080, use_reloader=True, reloader_type='stat')

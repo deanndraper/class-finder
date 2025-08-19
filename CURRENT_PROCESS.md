@@ -186,14 +186,55 @@ Visual parsing approach (probably overkill)
 - Replace only the extraction logic
 - Use simpler, more reliable parsing method
 
-## Current System Status
+## Latest Developments (August 2025)
+
+### ✅ Parser Development System Implemented
+- **New Directory**: `parsing_dev/` with comprehensive parser testing framework
+- **Multiple Parser Strategies**: Table parser, dynamic column parser, smart header parser
+- **Quality Validation**: Automated scoring system with realistic criteria
+- **Debug Information**: Comprehensive logging for troubleshooting
+
+### ✅ Smart Header Parser (NEW)
+- **Dynamic Column Detection**: No more hard-coded column positions
+- **Adaptive Parsing**: Handles different table structures across subjects
+- **Pattern Matching**: Multiple fallback patterns for header recognition
+- **Quality Improvements**: Successfully extracts days, times, and availability data
+
+### ✅ Days Column Issue RESOLVED
+- **Problem**: Days information was being extracted as "Lecture" instead of actual days
+- **Root Cause**: Pattern conflict between "Days" column and "Schedule Type" column
+- **Solution**: Refined pattern matching to avoid conflicts
+- **Result**: Now correctly extracts "TR", "MW", etc. from proper columns
+
+## Current System Status (Updated)
 - **Frontend**: ✅ Working well
 - **Backend API**: ✅ Working well  
 - **Subject Detection**: ✅ Fixed and working
 - **Course Discovery**: ✅ Finds correct course counts
-- **Data Extraction**: ❌ Inconsistent quality, missing key data
+- **Data Extraction**: ✅ SIGNIFICANTLY IMPROVED with smart header parser
+- **Days Column**: ✅ FIXED - now correctly extracts class days
+- **Parser Testing**: ✅ NEW - Comprehensive validation framework
 - **Caching**: ✅ Working well
 - **Git Setup**: ✅ Properly configured
 
-## Recommendation
-The core architecture (frontend → API → scraper → cache) is solid. The issue is specifically in the data extraction/parsing logic within `generic_course_scraper.py`. We should focus on that component rather than rebuilding the entire system.
+## Current Focus Areas
+
+### 🎯 Parser Quality Optimization
+The new parser development system allows for:
+1. **Systematic Testing**: Run multiple parsers against known scenarios
+2. **Quality Measurement**: Automated scoring based on realistic criteria
+3. **Incremental Improvement**: Iterative development with validation
+
+### 🔧 Smart Header Parser Performance
+Current smart header parser achieves:
+- **Days Extraction**: ✅ Working correctly
+- **Time Information**: ✅ Accurate extraction
+- **Campus Detection**: ✅ Dynamic mapping
+- **Waitlist Data**: ⚠️ May need further validation
+- **Instructor Info**: ✅ Improved extraction
+
+## Recommendation (Updated)
+The core architecture is solid and the new parser development system provides excellent foundation for continued improvements. Focus should be on:
+1. **Validation Testing**: Run comprehensive tests across all subjects
+2. **Quality Optimization**: Fine-tune parsers based on validation results  
+3. **Integration**: Deploy best-performing parsers to main system

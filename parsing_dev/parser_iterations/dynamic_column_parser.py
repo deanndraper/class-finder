@@ -218,7 +218,7 @@ class SmartHeaderParser(BaseParser):
                             columnMap.credits = index;
                         }}
                         // Days patterns
-                        else if (matchHeaderPattern(headerText, ['days', 'day', 'schedule'])) {{
+                        else if (matchHeaderPattern(headerText, ['days', 'day'])) {{
                             columnMap.days = index;
                         }}
                         // Time patterns

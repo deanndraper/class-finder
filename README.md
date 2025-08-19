@@ -49,17 +49,22 @@ class-schedule/
 │   ├── styles.css             # Beautiful CSS styling
 │   ├── script_api.js          # JavaScript with API integration
 │   └── script.js              # Standalone JavaScript version
+├── parsing_dev/               # NEW: Advanced parser development system
+│   ├── parser_iterations/     # Multiple parser implementations
+│   ├── test_scenarios/        # Specific test cases for validation
+│   ├── validation/            # Quality assessment framework
+│   └── results/              # Test outputs and comparisons
 ├── backend_api.py             # Flask API server
-├── generic_course_scraper.py  # NEW: Generic scraper for any subject
+├── generic_course_scraper.py  # Generic scraper for any subject
 ├── complete_automation.py     # Complete automation with HTML reports
 ├── corrected_comm_data.py     # Verified COMM course data
 ├── test_suite.py              # Comprehensive testing framework
 ├── automated_course_scraper.py # Full automation framework
-├── targeted_comm_scraper.py   # Targeted COMM course scraper
-├── scrape_comm_courses.py     # Basic scraping functionality
 ├── course_scraper.py          # Core scraping classes
 ├── course_cache/              # Auto-generated cache (excluded from git)
 ├── venv/                      # Python virtual environment (excluded from git)
+├── CURRENT_PROCESS.md         # Current system architecture analysis
+├── ADAPTIVE_PARSER_PLAN.md    # Future parser improvement roadmap
 └── README.md                  # This file
 ```
 
@@ -96,6 +101,43 @@ class-schedule/
 
 5. **Access the application**
    - Open your browser to: **http://localhost:8080**
+
+## 🧪 Parser Development System
+
+### Advanced Parser Architecture
+
+The project now includes a dedicated **parsing development system** (`parsing_dev/`) that allows for:
+
+- **Multiple Parser Implementations**: Different parsing strategies (table-based, dynamic column detection, smart header parsing)
+- **Quality Validation Framework**: Automated testing that scores parser quality based on realistic criteria:
+  - Realistic demand patterns (low availability for Fall semester)
+  - Waitlist diversity (non-zero waitlist counts)
+  - Data completeness (campus, instructor, location fields)
+  - Data consistency (valid CRNs, proper formats)
+- **Iterative Development**: Test different parsers against known scenarios
+- **Debug Information**: Comprehensive logging and analysis tools
+
+### Smart Header Parser (Recommended)
+
+The system now uses intelligent header detection that:
+- **Dynamically identifies column structures** instead of hard-coding positions
+- **Handles different table layouts** across subjects and campuses
+- **Extracts complete course information** including days, times, availability
+- **Provides debug information** for troubleshooting
+
+### Running Parser Tests
+
+```bash
+# Test all parsers against default scenario
+cd parsing_dev
+python run_parser_tests.py all
+
+# Test specific parser
+python run_parser_tests.py single smart_header_parser_v1
+
+# List available parsers
+python run_parser_tests.py list
+```
 
 ## 🎯 Usage
 

@@ -1,0 +1,5 @@
+requests
+playwright
+Flask
+Flask-Cors
+beautifulsoup4

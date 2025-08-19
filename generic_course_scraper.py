@@ -127,10 +127,18 @@ class MontgomeryCollegeScraper:
                 subject_options = await page.locator('select[name="sel_subj"] option').all_text_contents()
                 
                 target_option = None
+                # Look for exact subject match first (e.g., "COMM-Communication Studies")
                 for option in subject_options:
-                    if subject.upper() in option.upper():
+                    if option.upper().startswith(f'{subject.upper()}-'):
                         target_option = option
                         break
+                
+                # Fallback to contains match if no exact match found
+                if not target_option:
+                    for option in subject_options:
+                        if subject.upper() in option.upper():
+                            target_option = option
+                            break
                 
                 if not target_option:
                     print(f"❌ Subject '{subject}' not found. Available subjects:")
@@ -195,107 +203,68 @@ class MontgomeryCollegeScraper:
     async def extract_course_data(self, page, subject):
         """Extract course data from the page"""
         
-        # Use the working extraction logic
+        # Use table-based extraction since Montgomery College uses proper HTML tables
         course_data = await page.evaluate(f"""
             () => {{
                 const courses = [];
-                const text = document.body.innerText;
-                const lines = text.split('\\n');
                 
-                for (let i = 0; i < lines.length; i++) {{
-                    const line = lines[i].trim();
+                // Find all tables that contain course data
+                const courseTables = Array.from(document.querySelectorAll('table')).filter(table => {{
+                    return table.textContent.includes('{subject}') && table.textContent.includes('CRN');
+                }});
+                
+                courseTables.forEach(table => {{
+                    const rows = Array.from(table.querySelectorAll('tr'));
                     
-                    // Look for course lines: SUBJECT + digits + space + 5-digit CRN
-                    const coursePattern = new RegExp(`^{subject}\\\\d+\\\\s+\\\\d{{5}}`);
-                    if (coursePattern.test(line)) {{
-                        const parts = line.split(/\\s+/);
-                        const courseCode = parts[0];
-                        const crn = parts[1];
-                        const credits = parts[2] || '3.000';
-                        const days = parts[3] || 'TBA';
+                    // Skip header row, process data rows
+                    for (let i = 1; i < rows.length; i++) {{
+                        const row = rows[i];
+                        const cells = Array.from(row.querySelectorAll('td')).map(cell => cell.textContent.trim());
                         
-                        // Extract time from the main line
-                        let time = 'TBA';
-                        const timeMatch = line.match(/(\\d{{1,2}}:\\d{{2}}\\s*(AM|PM)[^\\d]*\\d{{1,2}}:\\d{{2}}\\s*(AM|PM))/);
-                        if (timeMatch) {{
-                            time = timeMatch[1];
-                        }}
-                        
-                        // Extract dates from the main line
-                        let dates = 'TBA';
-                        const dateMatch = line.match(/(\\d{{2}}\\/\\d{{2}}\\/\\d{{2}}\\s*-\\s*\\d{{2}}\\/\\d{{2}}\\/\\d{{2}})/);
-                        if (dateMatch) {{
-                            dates = dateMatch[1];
-                        }}
-                        
-                        // Look for seats, waitlist, and campus in following lines
-                        let seatsAvailable = 0;
-                        let waitlistCount = 0;
-                        let campus = 'TBA';
-                        let location = 'TBA';
-                        let instructor = 'TBA';
-                        
-                        for (let j = i + 1; j < Math.min(i + 8, lines.length); j++) {{
-                            const nextLine = lines[j].trim();
+                        // Ensure we have enough cells and this is a course row
+                        if (cells.length >= 8 && cells[0].startsWith('{subject}')) {{
+                            const courseCode = cells[0] || 'TBA';
+                            const crn = cells[1] || 'TBA';
+                            const credits = cells[2] || '3.000';
+                            const days = cells[3] || 'TBA';
+                            const time = cells[4] || 'TBA';
+                            const dates = cells[5] || 'TBA';
+                            const seatsAvailable = parseInt(cells[6]) || 0;
+                            const waitlistCount = parseInt(cells[7]) || 0;
+                            const campus = cells[8] || 'TBA';
+                            const location = cells[9] || 'TBA';
+                            const instructor = cells[10] || 'TBA';
+                            const scheduleType = cells[11] || 'Lecture';
                             
-                            // Single number on line = seats or waitlist
-                            if (/^\\d+$/.test(nextLine)) {{
-                                const num = parseInt(nextLine);
-                                if (seatsAvailable === 0) {{
-                                    seatsAvailable = num;
-                                }} else if (waitlistCount === 0) {{
-                                    waitlistCount = num;
-                                }}
-                            }}
+                            // Determine availability
+                            const hasAvailability = seatsAvailable > waitlistCount;
+                            const status = hasAvailability ? 
+                                `✅ ${{seatsAvailable}} > ${{waitlistCount}}` : 
+                                `❌ ${{seatsAvailable}} ≤ ${{waitlistCount}}`;
                             
-                            // Campus line
-                            if (nextLine.includes('Rockville') || nextLine.includes('Germantown') || 
-                                nextLine.includes('Takoma') || nextLine.includes('Distance')) {{
-                                
-                                // Extract campus name
-                                if (nextLine.includes('Rockville')) campus = 'Rockville';
-                                else if (nextLine.includes('Germantown')) campus = 'Germantown';
-                                else if (nextLine.includes('Takoma')) campus = 'Takoma Park/Silver Spring';
-                                else if (nextLine.includes('Distance')) campus = 'Distance Learning';
-                                
-                                // Extract location and instructor from tab-separated values
-                                const campusParts = nextLine.split('\\t');
-                                if (campusParts.length >= 2) {{
-                                    location = campusParts[1] || 'TBA';
-                                    instructor = campusParts[2] || 'TBA';
-                                }}
-                                
-                                break;
-                            }}
+                            const course = {{
+                                course: courseCode,
+                                crn: crn,
+                                courseTitle: courseCode,
+                                section: '001', // Will extract later if needed
+                                credits: credits,
+                                days: days,
+                                time: time,
+                                dates: dates,
+                                seatsAvailable: seatsAvailable,
+                                waitlistCount: waitlistCount,
+                                campus: campus,
+                                location: location,
+                                instructor: instructor,
+                                scheduleType: scheduleType,
+                                hasAvailability: hasAvailability,
+                                status: status
+                            }};
+                            
+                            courses.push(course);
                         }}
-                        
-                        // Determine availability
-                        const hasAvailability = seatsAvailable > waitlistCount;
-                        const status = hasAvailability ? 
-                            `✅ ${{seatsAvailable}} > ${{waitlistCount}}` : 
-                            `❌ ${{seatsAvailable}} ≤ ${{waitlistCount}}`;
-                        
-                        const course = {{
-                            course: courseCode,
-                            crn: crn,
-                            courseTitle: courseCode, // Will be updated with full title if available
-                            section: '001',
-                            credits: credits,
-                            days: days,
-                            time: time,
-                            dates: dates,
-                            seatsAvailable: seatsAvailable,
-                            waitlistCount: waitlistCount,
-                            campus: campus,
-                            location: location,
-                            instructor: instructor,
-                            hasAvailability: hasAvailability,
-                            status: status
-                        }};
-                        
-                        courses.push(course);
                     }}
-                }}
+                }});
                 
                 return courses;
             }}

@@ -7,6 +7,7 @@ Real-time scraping with intelligent caching for any subject/term
 import asyncio
 import json
 import os
+import random
 import time
 from datetime import datetime, timedelta
 from playwright.async_api import async_playwright
@@ -22,6 +23,31 @@ class MontgomeryCollegeScraper:
         """Ensure cache directory exists"""
         if not os.path.exists(self.cache_dir):
             os.makedirs(self.cache_dir)
+    
+    def cleanup_old_cache_files(self, max_age_hours=2):
+        """Remove cache files older than specified hours"""
+        if not os.path.exists(self.cache_dir):
+            return
+        
+        current_time = time.time()
+        max_age_seconds = max_age_hours * 3600  # Convert hours to seconds
+        cleaned_count = 0
+        
+        try:
+            for filename in os.listdir(self.cache_dir):
+                if filename.endswith('.json'):
+                    filepath = os.path.join(self.cache_dir, filename)
+                    file_time = os.path.getmtime(filepath)
+                    
+                    if (current_time - file_time) > max_age_seconds:
+                        os.remove(filepath)
+                        cleaned_count += 1
+            
+            if cleaned_count > 0:
+                print(f"🧹 Cleaned {cleaned_count} cache files older than {max_age_hours} hours")
+                
+        except Exception as e:
+            print(f"⚠️ Cache cleanup error: {e}")
     
     def get_cache_key(self, term, subject, course_filter=None, campus_filter=None):
         """Generate unique cache key for search parameters"""
@@ -43,6 +69,10 @@ class MontgomeryCollegeScraper:
     
     def load_from_cache(self, cache_key):
         """Load course data from cache if valid"""
+        # Probabilistic cache cleanup: 10% chance of cleaning old files
+        if random.randint(1, 10) == 1:
+            self.cleanup_old_cache_files()
+        
         cache_path = self.get_cache_path(cache_key)
         
         if self.is_cache_valid(cache_path):

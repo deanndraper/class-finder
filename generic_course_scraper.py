@@ -201,40 +201,133 @@ class MontgomeryCollegeScraper:
                 await browser.close()
     
     async def extract_course_data(self, page, subject):
-        """Extract course data from the page"""
+        """Extract course data from the page using smart header-based parsing"""
         
-        # Use table-based extraction since Montgomery College uses proper HTML tables
+        # Use smart header-based extraction that dynamically maps columns
         course_data = await page.evaluate(f"""
             () => {{
                 const courses = [];
                 
-                // Find all tables that contain course data
+                // Helper function to match header text with multiple patterns
+                function matchHeaderPattern(headerText, patterns) {{
+                    const text = headerText.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    return patterns.some(pattern => {{
+                        const cleanPattern = pattern.toLowerCase().replace(/[^a-z0-9]/g, '');
+                        return text.includes(cleanPattern) || cleanPattern.includes(text);
+                    }});
+                }}
+                
                 const courseTables = Array.from(document.querySelectorAll('table')).filter(table => {{
-                    return table.textContent.includes('{subject}') && table.textContent.includes('CRN');
+                    return table.textContent.includes('{subject}');
                 }});
                 
                 courseTables.forEach(table => {{
                     const rows = Array.from(table.querySelectorAll('tr'));
+                    if (rows.length < 2) return;
                     
-                    // Skip header row, process data rows
-                    for (let i = 1; i < rows.length; i++) {{
-                        const row = rows[i];
-                        const cells = Array.from(row.querySelectorAll('td')).map(cell => cell.textContent.trim());
+                    // Find header row (might not be first row)
+                    let headerRowIndex = -1;
+                    let headerCells = [];
+                    
+                    for (let i = 0; i < Math.min(3, rows.length); i++) {{
+                        const cells = Array.from(rows[i].querySelectorAll('th, td')).map(cell => cell.textContent.trim());
                         
-                        // Ensure we have enough cells and this is a course row
-                        if (cells.length >= 8 && cells[0].startsWith('{subject}')) {{
-                            const courseCode = cells[0] || 'TBA';
-                            const crn = cells[1] || 'TBA';
-                            const credits = cells[2] || '3.000';
-                            const days = cells[3] || 'TBA';
-                            const time = cells[4] || 'TBA';
-                            const dates = cells[5] || 'TBA';
-                            const seatsAvailable = parseInt(cells[6]) || 0;
-                            const waitlistCount = parseInt(cells[7]) || 0;
-                            const campus = cells[8] || 'TBA';
-                            const location = cells[9] || 'TBA';
-                            const instructor = cells[10] || 'TBA';
-                            const scheduleType = cells[11] || 'Lecture';
+                        // Check if this looks like a header row
+                        const hasHeaderKeywords = cells.some(cell => 
+                            cell.toLowerCase().includes('course') || 
+                            cell.toLowerCase().includes('crn') ||
+                            cell.toLowerCase().includes('wait') ||
+                            cell.toLowerCase().includes('seat')
+                        );
+                        
+                        if (hasHeaderKeywords) {{
+                            headerRowIndex = i;
+                            headerCells = cells;
+                            break;
+                        }}
+                    }}
+                    
+                    if (headerRowIndex === -1) {{
+                        // Fallback to first row if no clear header found
+                        headerRowIndex = 0;
+                        headerCells = Array.from(rows[0].querySelectorAll('th, td')).map(cell => cell.textContent.trim());
+                    }}
+                    
+                    // Advanced column mapping with multiple pattern matching
+                    const columnMap = {{}};
+                    
+                    headerCells.forEach((headerText, index) => {{
+                        // Course patterns
+                        if (matchHeaderPattern(headerText, ['course', 'subject', 'class'])) {{
+                            columnMap.course = index;
+                        }}
+                        // CRN patterns
+                        else if (matchHeaderPattern(headerText, ['crn', 'reference', 'number'])) {{
+                            columnMap.crn = index;
+                        }}
+                        // Credits patterns
+                        else if (matchHeaderPattern(headerText, ['credit', 'hour', 'units'])) {{
+                            columnMap.credits = index;
+                        }}
+                        // Days patterns
+                        else if (matchHeaderPattern(headerText, ['days', 'day', 'schedule'])) {{
+                            columnMap.days = index;
+                        }}
+                        // Time patterns
+                        else if (matchHeaderPattern(headerText, ['time', 'period', 'hours'])) {{
+                            columnMap.time = index;
+                        }}
+                        // Dates patterns
+                        else if (matchHeaderPattern(headerText, ['date', 'dates', 'start', 'end', 'duration'])) {{
+                            columnMap.dates = index;
+                        }}
+                        // Seats Available patterns - CRITICAL FOR ACCURACY
+                        else if (matchHeaderPattern(headerText, ['seatsavail', 'available', 'open', 'capacity', 'spots'])) {{
+                            columnMap.seatsAvailable = index;
+                        }}
+                        // Waitlist patterns - CRITICAL FOR ACCURACY  
+                        else if (matchHeaderPattern(headerText, ['wait', 'waitlist', 'queue', 'pending'])) {{
+                            columnMap.waitlistCount = index;
+                        }}
+                        // Campus patterns
+                        else if (matchHeaderPattern(headerText, ['campus', 'site', 'center'])) {{
+                            columnMap.campus = index;
+                        }}
+                        // Location/Room patterns
+                        else if (matchHeaderPattern(headerText, ['location', 'room', 'building', 'bldg', 'facility'])) {{
+                            columnMap.location = index;
+                        }}
+                        // Instructor patterns
+                        else if (matchHeaderPattern(headerText, ['instructor', 'teacher', 'faculty', 'prof'])) {{
+                            columnMap.instructor = index;
+                        }}
+                        // Schedule type patterns
+                        else if (matchHeaderPattern(headerText, ['type', 'format', 'method', 'mode'])) {{
+                            columnMap.scheduleType = index;
+                        }}
+                    }});
+                    
+                    // Process data rows starting after header
+                    for (let i = headerRowIndex + 1; i < rows.length; i++) {{
+                        const row = rows[i];
+                        const cells = Array.from(row.querySelectorAll('td, th')).map(cell => cell.textContent.trim());
+                        
+                        // Check if this is a course data row
+                        const courseCell = cells[columnMap.course || 0] || '';
+                        if (cells.length >= 3 && courseCell.startsWith('{subject}')) {{
+                            
+                            const courseCode = courseCell || 'TBA';
+                            const crn = cells[columnMap.crn || 1] || 'TBA';
+                            const credits = cells[columnMap.credits || 2] || '3.000';
+                            const days = cells[columnMap.days || 3] || 'TBA';
+                            const time = cells[columnMap.time || 4] || 'TBA';
+                            const dates = cells[columnMap.dates || 5] || 'TBA';
+                            const seatsAvailable = parseInt(cells[columnMap.seatsAvailable || 6]) || 0;
+                            const waitlistCount = parseInt(cells[columnMap.waitlistCount || 7]) || 0;
+                            const campus = cells[columnMap.campus || 8] || 'TBA';
+                            const location = cells[columnMap.location || 9] || 'TBA';
+                            const instructor = cells[columnMap.instructor || 10] || 'TBA';
+                            const scheduleType = cells[columnMap.scheduleType || 11] || 'Lecture';
                             
                             // Determine availability
                             const hasAvailability = seatsAvailable > waitlistCount;

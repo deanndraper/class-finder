@@ -411,13 +411,18 @@ function generateSummaryCards(allResults, availableResults, waitlistedResults) {
 }
 
 function generateAvailableCoursesSection(availableResults) {
+    const containerId = 'availableCoursesTable';
+    setTimeout(() => {
+        initializeDataTable(containerId, availableResults, `Available Courses (${availableResults.length})`);
+    }, 100);
+    
     return `
         <div class="course-table-container">
             <h3><i class="fas fa-check-circle" style="color: #28a745;"></i> Available Courses (${availableResults.length})</h3>
             <div style="background: #d4edda; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #28a745;">
                 <strong>Great news!</strong> These sections have more seats available than people on the waitlist.
             </div>
-            ${generateCourseTable(availableResults)}
+            <div id="${containerId}"></div>
         </div>
     `;
 }
@@ -434,23 +439,175 @@ function generateNoAvailableCoursesSection() {
 }
 
 function generateAllCoursesSection(results) {
+    const containerId = 'allCoursesTable';
+    setTimeout(() => {
+        initializeDataTable(containerId, results, `All Course Sections (${results.length})`);
+    }, 200);
+    
     return `
         <div class="course-table-container">
             <h3><i class="fas fa-list"></i> All Course Sections (${results.length})</h3>
-            ${generateCourseTable(results)}
+            <div id="${containerId}"></div>
         </div>
     `;
 }
 
-function generateCourseTable(courses) {
+function initializeDataTable(containerId, courses, tableTitle = "Course Results") {
+    // Clear the container
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
     if (courses.length === 0) {
-        return `
+        container.innerHTML = `
             <div class="no-results">
                 <i class="fas fa-search"></i>
                 <h4>No courses found</h4>
                 <p>Try adjusting your search criteria</p>
             </div>
         `;
+        return;
+    }
+    
+    // Create table element
+    const tableId = `${containerId}-table`;
+    container.innerHTML = `
+        <div class="data-table-wrapper">
+            <div class="table-header">
+                <h4>${tableTitle}</h4>
+            </div>
+            <div id="${tableId}"></div>
+        </div>
+    `;
+    
+    // Define column configuration
+    const columns = [
+        {
+            title: "CRN", 
+            field: "crn", 
+            width: 80,
+            headerFilter: "input",
+            headerFilterPlaceholder: "Filter CRN...",
+        },
+        {
+            title: "Course", 
+            field: "course", 
+            width: 100,
+            headerFilter: "input",
+            headerFilterPlaceholder: "Filter course...",
+            formatter: function(cell) {
+                const course = cell.getValue();
+                const courseTitle = cell.getRow().getData().courseTitle || '';
+                return `<strong>${course}</strong><br><small>${courseTitle}</small>`;
+            }
+        },
+        {
+            title: "Section", 
+            field: "section", 
+            width: 80,
+            headerFilter: "input"
+        },
+        {
+            title: "Days", 
+            field: "days", 
+            width: 80,
+            headerFilter: "input",
+            headerFilterPlaceholder: "TR, MW..."
+        },
+        {
+            title: "Time", 
+            field: "time", 
+            width: 150,
+            headerFilter: "input"
+        },
+        {
+            title: "Campus", 
+            field: "campus", 
+            width: 120,
+            headerFilter: "select",
+            headerFilterParams: {
+                values: true, // Auto-populate from data
+                clearable: true,
+                placeholder: "All Campuses"
+            },
+            formatter: function(cell) {
+                const campus = cell.getValue();
+                const campusClass = getCampusClass(campus);
+                return `<span class="campus-tag ${campusClass}">${campus}</span>`;
+            }
+        },
+        {
+            title: "Location", 
+            field: "location", 
+            width: 100,
+            headerFilter: "input"
+        },
+        {
+            title: "Instructor", 
+            field: "instructor", 
+            width: 150,
+            headerFilter: "input",
+            headerFilterPlaceholder: "Filter instructor..."
+        },
+        {
+            title: "Seats", 
+            field: "seatsAvailable", 
+            width: 80,
+            align: "center",
+            sorter: "number",
+            formatter: function(cell) {
+                return `<strong>${cell.getValue()}</strong>`;
+            }
+        },
+        {
+            title: "Waitlist", 
+            field: "waitlistCount", 
+            width: 80,
+            align: "center", 
+            sorter: "number",
+            formatter: function(cell) {
+                return `<strong>${cell.getValue()}</strong>`;
+            }
+        }
+    ];
+    
+    // Initialize Tabulator
+    const table = new Tabulator(`#${tableId}`, {
+        data: courses,
+        columns: columns,
+        layout: "fitColumns",
+        responsiveLayout: "collapse",
+        pagination: "local",
+        paginationSize: 25,
+        paginationSizeSelector: [10, 25, 50, 100],
+        movableColumns: true,
+        resizableRows: false,
+        rowFormatter: function(row) {
+            const data = row.getData();
+            const campusClass = getCampusClass(data.campus);
+            const availabilityClass = data.hasAvailability ? 'available' : 'waitlisted';
+            row.getElement().classList.add(availabilityClass, campusClass);
+        },
+        initialSort: [
+            {column: "course", dir: "asc"},
+            {column: "section", dir: "asc"}
+        ],
+        tooltips: true,
+        tooltipsHeader: true
+    });
+    
+    return table;
+}
+
+function downloadTableCSV(tableId) {
+    const tableElement = document.querySelector(`#${tableId}`);
+    if (tableElement && tableElement.tabulator) {
+        tableElement.tabulator.download("csv", "montgomery_college_courses.csv");
+    }
+}
+
+function generateSimpleTable(courses) {
+    if (courses.length === 0) {
+        return '<p>No courses found.</p>';
     }
     
     const tableRows = courses.map(course => {
@@ -460,34 +617,34 @@ function generateCourseTable(courses) {
         
         return `
             <tr class="${availabilityClass} ${campusClass}">
-                <td class="crn">${course.crn}</td>
-                <td>${course.course}</td>
+                <td>${course.crn}</td>
+                <td><strong>${course.course}</strong><br><small>${course.courseTitle || ''}</small></td>
                 <td>${course.section}</td>
-                <td>${course.days} ${course.time}</td>
+                <td>${course.days}</td>
+                <td>${course.time}</td>
                 <td>${course.campus}</td>
                 <td>${course.location}</td>
                 <td>${course.instructor}</td>
                 <td><strong>${course.seatsAvailable}</strong></td>
                 <td><strong>${course.waitlistCount}</strong></td>
-                <td class="${statusClass}">${course.status}</td>
             </tr>
         `;
     }).join('');
     
     return `
-        <table class="course-table">
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
             <thead>
                 <tr>
-                    <th>CRN</th>
-                    <th>Course</th>
-                    <th>Section</th>
-                    <th>Days/Time</th>
-                    <th>Campus</th>
-                    <th>Location</th>
-                    <th>Instructor</th>
-                    <th>Seats</th>
-                    <th>Waitlist</th>
-                    <th>Status</th>
+                    <th style="background: #2c5aa0; color: white; padding: 12px; text-align: left;">CRN</th>
+                    <th style="background: #2c5aa0; color: white; padding: 12px; text-align: left;">Course</th>
+                    <th style="background: #2c5aa0; color: white; padding: 12px; text-align: left;">Section</th>
+                    <th style="background: #2c5aa0; color: white; padding: 12px; text-align: left;">Days</th>
+                    <th style="background: #2c5aa0; color: white; padding: 12px; text-align: left;">Time</th>
+                    <th style="background: #2c5aa0; color: white; padding: 12px; text-align: left;">Campus</th>
+                    <th style="background: #2c5aa0; color: white; padding: 12px; text-align: left;">Location</th>
+                    <th style="background: #2c5aa0; color: white; padding: 12px; text-align: left;">Instructor</th>
+                    <th style="background: #2c5aa0; color: white; padding: 12px; text-align: left;">Seats</th>
+                    <th style="background: #2c5aa0; color: white; padding: 12px; text-align: left;">Waitlist</th>
                 </tr>
             </thead>
             <tbody>
@@ -653,7 +810,7 @@ function generateFullHTMLReport() {
     </div>
     
     <h2>Course Results</h2>
-    ${generateCourseTable(currentSearchResults)}
+    ${generateSimpleTable(currentSearchResults)}
 </body>
 </html>
     `;

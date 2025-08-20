@@ -618,7 +618,7 @@ function generateSimpleTable(courses) {
         return `
             <tr class="${availabilityClass} ${campusClass}">
                 <td>${course.crn}</td>
-                <td><strong>${course.course}</strong><br><small>${course.courseTitle || ''}</small></td>
+                <td>${course.course}</td>
                 <td>${course.section}</td>
                 <td>${course.days}</td>
                 <td>${course.time}</td>

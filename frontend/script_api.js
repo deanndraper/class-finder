@@ -312,6 +312,8 @@ function showResults(results, criteria, apiData) {
         
         if (availableResults.length > 0) {
             document.getElementById('availableCourses').innerHTML = generateAvailableCoursesSection(availableResults);
+            // Initialize available courses table immediately after DOM update
+            initializeDataTable('availableCoursesTable', availableResults, `Available Courses (${availableResults.length})`);
             document.getElementById('allCourses').innerHTML = `
                 <div class="info-box" style="background: #e8f4f8; padding: 1rem; border-radius: 8px; border-left: 4px solid #2c5aa0;">
                     <strong>ℹ️ Filtered View:</strong> Showing only ${availableResults.length} available courses (seats > waitlist). 
@@ -333,6 +335,8 @@ function showResults(results, criteria, apiData) {
         
         if (availableResults.length > 0) {
             document.getElementById('availableCourses').innerHTML = generateAvailableCoursesSection(availableResults);
+            // Initialize available courses table immediately after DOM update
+            initializeDataTable('availableCoursesTable', availableResults, `Available Courses (${availableResults.length})`);
         } else {
             document.getElementById('availableCourses').innerHTML = generateNoAvailableCoursesSection();
         }
@@ -340,6 +344,8 @@ function showResults(results, criteria, apiData) {
         // Show only waitlisted courses in "All Courses" section to avoid duplicates
         const waitlistedResults = results.filter(r => !r.hasAvailability);
         document.getElementById('allCourses').innerHTML = generateWaitlistedCoursesSection(waitlistedResults);
+        // Initialize waitlisted courses table after available courses table is done
+        initializeDataTable('waitlistedCoursesTable', waitlistedResults, `Waitlisted Courses (${waitlistedResults.length})`);
     }
 }
 
@@ -392,9 +398,6 @@ function generateSummaryCards(allResults, availableResults, waitlistedResults, a
 
 function generateAvailableCoursesSection(availableResults) {
     const containerId = 'availableCoursesTable';
-    setTimeout(() => {
-        initializeDataTable(containerId, availableResults, `Available Courses (${availableResults.length})`);
-    }, 100);
     
     return `
         <div class="course-table-container">
@@ -429,9 +432,6 @@ function generateAllCoursesSection(results) {
 
 function generateWaitlistedCoursesSection(waitlistedResults) {
     const containerId = 'waitlistedCoursesTable';
-    setTimeout(() => {
-        initializeDataTable(containerId, waitlistedResults, `Waitlisted Courses (${waitlistedResults.length})`);
-    }, 200);
     
     return `
         <div class="course-table-container">
